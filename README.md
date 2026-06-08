@@ -134,8 +134,8 @@ Import schema và dữ liệu mẫu từ thư mục `database/`:
 Có thể import bằng MySQL Workbench, DBeaver hoặc CLI:
 
 ```powershell
-mysql -u root -p vneid < "database/vneid (22).sql"
-mysql -u root -p land-tax < "database/land-tax (22).sql"
+mysql -u root -p vneid < "database/vneid (2).sql"
+mysql -u root -p land-tax < "database/land-tax (2).sql"
 ```
 
 ### 4. Cài dependency Frontend
