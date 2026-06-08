@@ -98,7 +98,7 @@ Tài khoản dịch vụ (tuỳ tính năng cần dùng):
 ### 1. Clone repository
 
 ```powershell
-git clone https://github.com/<username>/<ten-repo>.git
+git clone https://github.com/khackhanh1201/KHOA_LUAN_TOT_NGHIEP_NHOM_9
 cd Khoa_luan_10d
 ```
 
@@ -134,8 +134,8 @@ Import schema và dữ liệu mẫu từ thư mục `database/`:
 Có thể import bằng MySQL Workbench, DBeaver hoặc CLI:
 
 ```powershell
-mysql -u root -p vneid < "database/vneid_simulator (0).sql"
-mysql -u root -p land-tax < "database/land_tax_management (0).sql"
+mysql -u root -p vneid < "database/vneid (22).sql"
+mysql -u root -p land-tax < "database/land-tax (22).sql"
 ```
 
 ### 4. Cài dependency Frontend
