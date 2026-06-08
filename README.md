@@ -98,7 +98,7 @@ Tài khoản dịch vụ (tuỳ tính năng cần dùng):
 ### 1. Clone repository
 
 ```powershell
-git clone https://github.com/khackhanh1201/KHOA_LUAN_TOT_NGHIEP_NHOM_9
+git clone https://github.com/khackhanh1201/KHOA_LUAN_TOT_NGHIEP_NHOM_9.git
 cd Khoa_luan_10d
 ```
 
