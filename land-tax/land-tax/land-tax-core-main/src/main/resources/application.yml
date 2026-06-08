@@ -1,0 +1,82 @@
+server:
+  port: 8080
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+spring:
+  application:
+    name: land-tax-core-service
+
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${LANDTAX_DB_NAME:land-tax}?useUnicode=true&characterEncoding=UTF-8&connectionCollation=utf8mb4_unicode_ci
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 20MB
+      max-request-size: 50MB
+
+jwt:
+  secret: ${JWT_SECRET:}
+
+vneid:
+  service:
+    url: ${VNEID_SERVICE_URL:http://localhost:9090}
+
+internal:
+  api:
+    secret: ${INTERNAL_API_SECRET:}
+
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:}
+  api-key: ${CLOUDINARY_API_KEY:}
+  api-secret: ${CLOUDINARY_API_SECRET:}
+
+gemini:
+  api-key: ${GEMINI_API_KEY:}
+
+ai:
+  service-url: ${AI_SERVICE_URL:http://localhost:8000}
+  secret-key: ${AI_SECRET_KEY:}
+  google-api-key: ${GOOGLE_API_KEY:}
+
+payos:
+  client-id: ${PAYOS_CLIENT_ID:}
+  api-key: ${PAYOS_API_KEY:}
+  checksum-key: ${PAYOS_CHECKSUM_KEY:}
+  return-url: ${PAYOS_RETURN_URL:http://localhost:5173/payment/success}
+  cancel-url: ${PAYOS_CANCEL_URL:http://localhost:5173/payment/cancel}
+  receiver:
+    bank-name: ${PAYOS_RECEIVER_BANK_NAME:}
+    account-name: ${PAYOS_RECEIVER_ACCOUNT_NAME:}
+    account-number: ${PAYOS_RECEIVER_ACCOUNT_NUMBER:}
+
+app:
+  upload:
+    dir: ${UPLOAD_DIR:uploads}
+
+tax:
+  scheduler:
+    zone: Asia/Ho_Chi_Minh
+  annual-billing:
+    scheduler:
+      enabled: true
+    cron: "0 0 0 1 4 *"
+  debt-reminder:
+    scheduler:
+      enabled: true
+    cron: "0 0 0 1 10 *"

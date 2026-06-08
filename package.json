@@ -1,0 +1,38 @@
+{
+  "name": "khoa_luan_10d",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:e2e:setup": "playwright test --project=setup-auth",
+    "test:e2e:workflow": "playwright test tests/specs/e2e_tax_workflow.spec.ts --project=chromium --workers=1",
+    "test:e2e:workflow:headed": "playwright test tests/specs/e2e_tax_workflow.spec.ts --project=chromium-watch --workers=1",
+    "test:e2e:exceptions": "playwright test tests/specs/e2e_tax_exceptions_flow.spec.ts --project=chromium --workers=1",
+    "test:e2e:exceptions:headed": "playwright test tests/specs/e2e_tax_exceptions_flow.spec.ts --project=chromium-watch --workers=1",
+    "test:e2e:security": "playwright test tests/specs/e2e_tax_security_validation.spec.ts --project=chromium --workers=1",
+    "test:e2e:security:headed": "playwright test tests/specs/e2e_tax_security_validation.spec.ts --project=chromium-watch --workers=1",
+    "test:e2e:auth": "playwright test tests/auth --project=chromium --workers=1",
+    "test:e2e:headed": "set E2E_WATCH=1&& set E2E_PAUSE_AFTER_EACH=1&& playwright test tests/auth/login-and-activation.spec.js --project=chromium-watch --workers=1",
+    "test:e2e:explore": "set E2E_USE_REAL_API=true&& playwright test tests/auth/login-manual-explore.spec.js --project=chromium-watch --workers=1",
+    "test:e2e:debug": "playwright test tests/auth/login-and-activation.spec.js --project=chromium --workers=1 --debug",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tien04-mm/Khoa_luan_10d.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/tien04-mm/Khoa_luan_10d/issues"
+  },
+  "homepage": "https://github.com/tien04-mm/Khoa_luan_10d#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@types/node": "^25.9.2"
+  }
+}

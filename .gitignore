@@ -1,0 +1,55 @@
+# Maven / Gradle / Java
+target/
+build/
+**/target/
+*.class
+
+# Node / FE
+node_modules/
+kltn2026/dist/
+
+# Python
+ai-chatbot-service/venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Env & secrets (commit .env.example, không commit .env)
+.env
+.env.local
+.env.*.local
+!.env.example
+!**/.env.example
+
+# Firebase / credentials
+firebase-service-account.json
+**/firebase-service-account.json
+
+# Local Spring overrides
+**/application-local.yml
+**/application-local.properties
+
+# Uploads & vector DB local
+uploads/
+ai-chatbot-service/chroma_db/
+
+# IDE / OS
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Android / Gradle
+AppVneID/.gradle/
+AppVneID/local.properties
+AppVneID/build/
+AppVneID/app/build/
+# Playwright auth state
+playwright/.auth/
+# Excel temp
+~$*
+**/~$*
