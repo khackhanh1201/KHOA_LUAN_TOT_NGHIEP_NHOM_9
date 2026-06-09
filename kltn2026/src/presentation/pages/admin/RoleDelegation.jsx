@@ -7,6 +7,7 @@ import { clearSession, getCurrentUser } from '../../../usecases/authService';
 import { useAsyncMountLoadWithReload } from '../../../hooks/useAsyncMountLoad';
 import {
   getUserCccd,
+  findAdminAccountId,
   loadDelegationUsers,
   initialState,
   roleDelegationReducer,
@@ -47,6 +48,11 @@ const RoleDelegation = () => {
     const u = getCurrentUser();
     return u?.cccdNumber || u?.cccd_number || u?.cccd || user?.cccdNumber || user?.cccd || '';
   }, [user]);
+
+  const currentAdminAccountId = useMemo(
+    () => findAdminAccountId(users, currentAdminCccd),
+    [users, currentAdminCccd]
+  );
 
   const usersForRoleTab = useMemo(() => filterUsersForRoleTab(users), [users]);
   const usersForDelegationTab = useMemo(
@@ -91,6 +97,7 @@ const RoleDelegation = () => {
     createDelegation({
       delegateTarget,
       currentAdminCccd,
+      currentAdminAccountId,
       showAlert,
       showConfirm,
       adminApi,

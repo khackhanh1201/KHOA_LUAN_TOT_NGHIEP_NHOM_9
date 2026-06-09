@@ -13,6 +13,16 @@ export const ROLE_DISPLAY = {
 export const getUserCccd = (usr) =>
   usr?.cccdNumber || usr?.cccd_number || usr?.cccd || '';
 
+export const getUserAccountId = (usr) => usr?.accountId ?? usr?.account_id ?? null;
+
+export const findAdminAccountId = (users, adminCccd) => {
+  if (!adminCccd) return null;
+  const match = users.find(
+    (u) => getUserCccd(u) === adminCccd && normalizeRole(u.role || u.role_code) === 'ROLE_ADMIN'
+  );
+  return getUserAccountId(match);
+};
+
 const normalizeUserRecord = (usr) => ({
   ...usr,
   accountId: usr?.accountId ?? usr?.account_id ?? null,
@@ -187,7 +197,15 @@ export const saveUserRole = async ({
 
   try {
     const cccd = getUserCccd(selectedUser);
-    await adminApi.updateUserRole(cccd, `ROLE_${selectedRoleCode}`);
+    if (!cccd) {
+      await showAlert({
+        title: 'Lỗi',
+        message: 'Không xác định được CCCD người dùng.',
+        variant: 'error',
+      });
+      return;
+    }
+    await adminApi.updateUserRole(cccd, `ROLE_${selectedRoleCode}`, getUserAccountId(selectedUser));
     await showAlert({
       title: 'Thành công',
       message: 'Cập nhật quyền hạn thành công!',
@@ -209,6 +227,7 @@ export const saveUserRole = async ({
 export const createDelegation = async ({
   delegateTarget,
   currentAdminCccd,
+  currentAdminAccountId,
   showAlert,
   showConfirm,
   adminApi,
@@ -238,6 +257,44 @@ export const createDelegation = async ({
     return;
   }
 
+  if (!currentAdminAccountId) {
+    await showAlert({
+      title: 'Lỗi',
+      message: 'Không xác định được account Admin hiện tại. Vui lòng tải lại trang.',
+      variant: 'error',
+    });
+    return;
+  }
+
+  const delegateeAccountId = getUserAccountId(delegateTarget);
+  if (!delegateeAccountId) {
+    await showAlert({
+      title: 'Lỗi',
+      message: 'Không xác định được tài khoản người nhận ủy quyền.',
+      variant: 'error',
+    });
+    return;
+  }
+
+  const delegateeStatus = formatStatus(delegateTarget.status || delegateTarget.account_status);
+  if (!delegateeStatus.ok) {
+    await showAlert({
+      title: 'Không hợp lệ',
+      message: 'Chỉ có thể ủy quyền cho tài khoản đang hoạt động.',
+      variant: 'warning',
+    });
+    return;
+  }
+
+  if (normalizeRole(delegateTarget.role || delegateTarget.role_code) === 'ROLE_ADMIN') {
+    await showAlert({
+      title: 'Không hợp lệ',
+      message: 'Người nhận đã là Quản trị viên.',
+      variant: 'warning',
+    });
+    return;
+  }
+
   const confirmed = await showConfirm({
     title: 'Xác nhận ủy quyền Admin',
     message: `Bạn sắp chuyển quyền Quản trị viên cho ${delegateTarget.fullName || delegateTarget.full_name}. Tài khoản của bạn sẽ chuyển thành Người dân và bạn sẽ được đăng xuất ngay sau khi xác nhận.`,
@@ -250,8 +307,12 @@ export const createDelegation = async ({
 
   onDelegatingChange(true);
   try {
-    await adminApi.updateUserRole(delegateeCccd, 'ROLE_ADMIN');
-    await adminApi.updateUserRole(currentAdminCccd, 'ROLE_CITIZEN');
+    await adminApi.delegateAdmin({
+      currentAdminCccd,
+      currentAdminAccountId,
+      delegateeCccd,
+      delegateeAccountId,
+    });
 
     onCloseModal();
 

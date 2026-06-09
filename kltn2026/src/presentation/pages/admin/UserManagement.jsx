@@ -100,25 +100,37 @@ const UserManagement = () => {
     }
 
     try {
-      const targetCccd = selectedUser.cccd || selectedUser.citizenCccd || selectedUser.cccdNumber;
+      const targetCccd = selectedUser.cccdNumber || selectedUser.cccd || selectedUser.citizenCccd;
+      if (!targetCccd) {
+        await showAlert({
+          title: 'Lỗi',
+          message: 'Không tìm thấy số CCCD của người dùng!',
+          variant: 'error',
+        });
+        return;
+      }
       
-      // Kiểm tra xem tài khoản đang hoạt động hay đang bị khóa
-      const isCurrentlyActive = String(selectedUser.status).toUpperCase() === 'ACTIVE' || selectedUser.status === 'Hoạt động';
+      const isCurrentlyActive = isUserActive(selectedUser.status);
       
       // Logic: Đang hoạt động -> truyền false (để Khóa) | Đang khóa -> truyền true (để Mở)
       const targetActiveStatus = !isCurrentlyActive; 
 
-      // Gọi API qua adminApi
-      await adminApi.updateUserStatus(targetCccd, targetActiveStatus);
+      // Gọi API qua adminApi (accountId để cập nhật đúng dòng khi user có nhiều role)
+      await adminApi.updateUserStatus(targetCccd, targetActiveStatus, selectedUser.accountId);
 
       // Cập nhật lại giao diện ngay lập tức
       const newStatusText = targetActiveStatus ? 'Hoạt động' : 'Bị khóa';
       dispatch({
         type: 'patch',
         payload: {
-          localUsers: users.map(u =>
-            (u.cccd === targetCccd || u.id === selectedUser.id) ? { ...u, status: newStatusText } : u
-          ),
+          localUsers: users.map(u => {
+            const sameAccount = selectedUser.accountId != null && u.accountId === selectedUser.accountId;
+            const sameLegacyUser = selectedUser.accountId == null
+              && (u.id === selectedUser.id
+                || u.cccdNumber === targetCccd
+                || u.cccd === targetCccd);
+            return sameAccount || sameLegacyUser ? { ...u, status: newStatusText } : u;
+          }),
         },
       });
       
@@ -208,7 +220,7 @@ const UserManagement = () => {
                 <tbody>
                   {filteredUsers.map((u, idx) => (
                     <tr 
-                      key={u.cccd || u.id || u.email || u.username} 
+                      key={u.accountId ?? `${u.cccdNumber ?? u.cccd ?? u.id}-${u.role ?? idx}`}
                       className={idx !== filteredUsers.length - 1 ? "border-bottom" : ""}
                     >
                       <td className="py-3 px-4">
@@ -244,11 +256,11 @@ const UserManagement = () => {
                       <td className="py-3 px-4 text-center">
                         <button type="button" className="btn btn-light btn-sm text-secondary" 
                           onClick={() => handleOpenLockModal(u)}
-                          title={u.status === 'Hoạt động' ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}
-                          aria-label={u.status === 'Hoạt động' ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}
+                          title={getLockActionLabel(u.status)}
+                          aria-label={getLockActionLabel(u.status)}
                           style={{ borderRadius: '8px', width: '36px', height: '36px' }}
                         >
-                          <i className={u.status === 'Hoạt động' ? "bi bi-lock-fill" : "bi bi-unlock-fill"}></i>
+                          <i className={getLockActionIcon(u.status)}></i>
                         </button>
                       </td>
                     </tr>
@@ -270,7 +282,7 @@ const UserManagement = () => {
         {isLockModalOpen && selectedUser && (
           (() => {
             // Tính toán giao diện dựa vào trạng thái hiện tại
-            const isCurrentlyActive = String(selectedUser.status).toUpperCase() === 'ACTIVE' || selectedUser.status === 'Hoạt động';
+            const isCurrentlyActive = isUserActive(selectedUser.status);
             const themeColor = isCurrentlyActive ? 'danger' : 'success';
             const titleText = isCurrentlyActive ? 'Khóa tài khoản' : 'Mở khóa tài khoản';
             const descText = isCurrentlyActive ? 'Đình chỉ tài khoản' : 'Khôi phục quyền truy cập cho';
@@ -350,7 +362,18 @@ const getRoleBadgeClass = (role) => {
   if (role === 'ROLE_ADMIN') return 'bg-danger bg-opacity-10 text-danger';
   return 'bg-secondary bg-opacity-10 text-secondary';
 };
-// Hàm mới xử lý Trạng thái
+const isUserActive = (status) => {
+  if (!status) return false;
+  const upperStatus = String(status).toUpperCase();
+  return upperStatus === 'ACTIVE' || upperStatus === 'HOẠT ĐỘNG';
+};
+
+const getLockActionLabel = (status) =>
+  isUserActive(status) ? 'Khóa tài khoản' : 'Mở khóa tài khoản';
+
+const getLockActionIcon = (status) =>
+  isUserActive(status) ? 'bi bi-lock-fill' : 'bi bi-unlock-fill';
+
 const getStatusClass = (status) => {
   if (!status) return 'text-secondary';
   

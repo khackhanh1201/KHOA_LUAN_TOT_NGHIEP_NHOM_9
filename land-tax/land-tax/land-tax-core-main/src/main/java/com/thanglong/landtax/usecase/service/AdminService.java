@@ -107,4 +107,77 @@ public class AdminService {
                 .roleName(role.getRoleName())
                 .build();
     }
+
+    private static final int ROLE_ADMIN_ID = 1;
+    private static final int ROLE_CITIZEN_ID = 2;
+
+    /**
+     * Ủy quyền Quản trị viên: hạ role admin hiện tại và nâng role người nhận trong một transaction.
+     */
+    @Transactional
+    public void delegateAdmin(
+            String currentAdminCccd,
+            Integer currentAdminAccountId,
+            String delegateeCccd,
+            Integer delegateeAccountId) {
+
+        if (currentAdminCccd == null || currentAdminCccd.isBlank()
+                || delegateeCccd == null || delegateeCccd.isBlank()
+                || currentAdminAccountId == null || delegateeAccountId == null) {
+            throw new IllegalArgumentException("Thiếu thông tin ủy quyền (CCCD hoặc accountId)");
+        }
+
+        if (currentAdminCccd.equals(delegateeCccd)) {
+            throw new IllegalArgumentException("Không thể ủy quyền cho chính mình");
+        }
+
+        CitizenLocalEntity adminCitizen = citizenLocalJpaRepository.findByCccdNumber(currentAdminCccd)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy Admin hiện tại"));
+
+        CitizenLocalEntity delegateeCitizen = citizenLocalJpaRepository.findByCccdNumber(delegateeCccd)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người nhận ủy quyền"));
+
+        AccountEntity adminAccount = accountJpaRepository.findById(currentAdminAccountId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản Admin"));
+
+        if (!adminCitizen.getCitizenId().equals(adminAccount.getCitizenId())) {
+            throw new IllegalArgumentException("Tài khoản Admin không khớp với CCCD");
+        }
+
+        RoleEntity currentAdminRole = roleJpaRepository.findById(adminAccount.getRoleId())
+                .orElseThrow(() -> new ResourceNotFoundException("Role Admin không hợp lệ"));
+        if (!"ROLE_ADMIN".equals(currentAdminRole.getRoleCode())) {
+            throw new IllegalArgumentException("Tài khoản hiện tại không phải Quản trị viên");
+        }
+
+        AccountEntity delegateeAccount = accountJpaRepository.findById(delegateeAccountId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản người nhận"));
+
+        if (!delegateeCitizen.getCitizenId().equals(delegateeAccount.getCitizenId())) {
+            throw new IllegalArgumentException("Tài khoản người nhận không khớp với CCCD");
+        }
+
+        RoleEntity delegateeRole = roleJpaRepository.findById(delegateeAccount.getRoleId())
+                .orElseThrow(() -> new ResourceNotFoundException("Role người nhận không hợp lệ"));
+        if ("ROLE_ADMIN".equals(delegateeRole.getRoleCode())) {
+            throw new IllegalArgumentException("Người nhận đã là Quản trị viên");
+        }
+
+        String delegateeStatus = delegateeAccount.getAccountStatus();
+        if (delegateeStatus != null && !"ACTIVE".equalsIgnoreCase(delegateeStatus)) {
+            throw new IllegalArgumentException("Tài khoản người nhận không ở trạng thái hoạt động");
+        }
+
+        adminAccount.setRoleId(ROLE_CITIZEN_ID);
+        delegateeAccount.setRoleId(ROLE_ADMIN_ID);
+        accountJpaRepository.save(adminAccount);
+        accountJpaRepository.save(delegateeAccount);
+
+        log.info(
+                "Delegated admin from CCCD {} (accountId={}) to CCCD {} (accountId={})",
+                currentAdminCccd,
+                currentAdminAccountId,
+                delegateeCccd,
+                delegateeAccountId);
+    }
 }

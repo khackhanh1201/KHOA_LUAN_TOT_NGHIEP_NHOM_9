@@ -8,7 +8,7 @@ const getAuthHeaders = () => ({
 const handleResponse = async (res) => {
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || `HTTP ${res.status}`);
+    throw new Error(err.message || err.error || `HTTP ${res.status}`);
   }
   return res.json();
 };
@@ -35,17 +35,28 @@ export const adminApi = {
     }).then(handleResponse),
 
   // Cập nhật trạng thái (Khóa/Mở khóa) cần truyền tham số isActive (true/false)
-  updateUserStatus: (cccd, isActive) =>
-    fetch(`${API_BASE}/api/admin/users/${cccd}/status?active=${isActive}`, {
+  updateUserStatus: (cccd, isActive, accountId) => {
+    const accountQuery = accountId != null ? `&accountId=${accountId}` : '';
+    return fetch(`${API_BASE}/api/admin/users/${cccd}/status?active=${isActive}${accountQuery}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
-    }).then(handleResponse),
+    }).then(handleResponse);
+  },
 
   // Cập nhật Role truyền thẳng qua URL Params
-  updateUserRole: (cccd, roleData) =>
-    fetch(`${API_BASE}/api/admin/users/${cccd}/role?role=${roleData}`, {
+  updateUserRole: (cccd, roleData, accountId) => {
+    const accountQuery = accountId != null ? `&accountId=${accountId}` : '';
+    return fetch(`${API_BASE}/api/admin/users/${cccd}/role?role=${roleData}${accountQuery}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
+    }).then(handleResponse);
+  },
+
+  delegateAdmin: (payload) =>
+    fetch(`${API_BASE}/api/admin/delegation`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(payload),
     }).then(handleResponse),
 
   getRoles: () =>

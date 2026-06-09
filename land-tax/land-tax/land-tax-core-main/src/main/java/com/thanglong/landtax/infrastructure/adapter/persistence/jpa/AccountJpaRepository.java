@@ -19,6 +19,8 @@ public interface AccountJpaRepository extends JpaRepository<AccountEntity, Integ
     /** Khi trùng citizen_id, lấy account_id lớn nhất (mới nhất). */
     Optional<AccountEntity> findFirstByCitizenIdOrderByAccountIdDesc(Integer citizenId);
 
+    java.util.List<AccountEntity> findAllByCitizenId(Integer citizenId);
+
     @org.springframework.data.jpa.repository.Query(
             value = "SELECT a FROM AccountEntity a "
                     + "JOIN RoleEntity r ON a.roleId = r.roleId "

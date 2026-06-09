@@ -3,6 +3,7 @@ package com.thanglong.landtax.infrastructure.adapter.controller;
 import com.thanglong.landtax.usecase.service.StatisticsService;
 import com.thanglong.landtax.usecase.service.AdminService;
 import com.thanglong.landtax.usecase.dto.CreateUserRequest;
+import com.thanglong.landtax.usecase.dto.DelegateAdminRequest;
 import com.thanglong.landtax.usecase.dto.UpdateRoleRequest;
 import com.thanglong.landtax.usecase.dto.RoleDTO;
 import com.thanglong.landtax.infrastructure.adapter.persistence.entity.CitizenLocalEntity;
@@ -106,15 +107,25 @@ public class AdminController {
     }
 
     @PutMapping("/users/{cccd}/status")
-    public ResponseEntity<?> updateUserStatus(@PathVariable String cccd, @RequestParam boolean active) {
+    public ResponseEntity<?> updateUserStatus(
+            @PathVariable String cccd,
+            @RequestParam boolean active,
+            @RequestParam(required = false) Integer accountId) {
         var citizenOpt = citizenLocalJpaRepository.findByCccdNumber(cccd);
         if (citizenOpt.isPresent()) {
             Integer citizenId = citizenOpt.get().getCitizenId();
-            var accountOpt = accountJpaRepository.findByCitizenId(citizenId);
-            if (accountOpt.isPresent()) {
-                var account = accountOpt.get();
-                account.setAccountStatus(active ? "ACTIVE" : "LOCKED");
-                accountJpaRepository.save(account);
+            if (accountId != null) {
+                accountJpaRepository.findById(accountId)
+                        .filter(account -> citizenId.equals(account.getCitizenId()))
+                        .ifPresent(account -> {
+                            account.setAccountStatus(active ? "ACTIVE" : "LOCKED");
+                            accountJpaRepository.save(account);
+                        });
+            } else {
+                accountJpaRepository.findAllByCitizenId(citizenId).forEach(account -> {
+                    account.setAccountStatus(active ? "ACTIVE" : "LOCKED");
+                    accountJpaRepository.save(account);
+                });
             }
         }
         
@@ -130,7 +141,10 @@ public class AdminController {
     }
 
     @PutMapping("/users/{cccd}/role")
-    public ResponseEntity<?> updateUserRole(@PathVariable String cccd, @RequestParam String role) {
+    public ResponseEntity<?> updateUserRole(
+            @PathVariable String cccd,
+            @RequestParam String role,
+            @RequestParam(required = false) Integer accountId) {
         Integer roleId = switch (role) {
             case "ROLE_ADMIN" -> 1;
             case "ROLE_TAX_OFFICER" -> 3;
@@ -141,17 +155,54 @@ public class AdminController {
         var citizenOpt = citizenLocalJpaRepository.findByCccdNumber(cccd);
         if (citizenOpt.isPresent()) {
             Integer citizenId = citizenOpt.get().getCitizenId();
-            var accountOpt = accountJpaRepository.findByCitizenId(citizenId);
-            if (accountOpt.isPresent()) {
-                var account = accountOpt.get();
-                account.setRoleId(roleId);
-                accountJpaRepository.save(account);
+            if (accountId != null) {
+                accountJpaRepository.findById(accountId)
+                        .filter(account -> citizenId.equals(account.getCitizenId()))
+                        .ifPresent(account -> {
+                            account.setRoleId(roleId);
+                            accountJpaRepository.save(account);
+                        });
+            } else {
+                accountJpaRepository.findFirstByCitizenIdOrderByAccountIdDesc(citizenId)
+                        .ifPresent(account -> {
+                            account.setRoleId(roleId);
+                            accountJpaRepository.save(account);
+                        });
             }
         }
 
         auditLogService.log("UPDATE_USER_ROLE", "ACCOUNT", cccd, "Cap nhat role = " + role);
 
         return ResponseEntity.ok(Map.of("message", "Cap nhat role nguoi dung thanh cong"));
+    }
+
+    /**
+     * POST /api/admin/delegation - Ủy quyền Quản trị viên (atomic).
+     */
+    @PostMapping("/delegation")
+    public ResponseEntity<?> delegateAdmin(@RequestBody DelegateAdminRequest request) {
+        log.info(
+                "POST /api/admin/delegation - from {} (accountId={}) to {} (accountId={})",
+                request.getCurrentAdminCccd(),
+                request.getCurrentAdminAccountId(),
+                request.getDelegateeCccd(),
+                request.getDelegateeAccountId());
+        try {
+            adminService.delegateAdmin(
+                    request.getCurrentAdminCccd(),
+                    request.getCurrentAdminAccountId(),
+                    request.getDelegateeCccd(),
+                    request.getDelegateeAccountId());
+            auditLogService.log(
+                    "DELEGATE_ADMIN",
+                    "ACCOUNT",
+                    request.getDelegateeCccd(),
+                    "Uy quyen admin tu " + request.getCurrentAdminCccd());
+            return ResponseEntity.ok(Map.of("message", "Uy quyen quan tri vien thanh cong"));
+        } catch (IllegalArgumentException e) {
+            log.error("Loi uy quyen admin: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 
     /**
