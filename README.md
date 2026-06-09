@@ -18,7 +18,6 @@ Dự án khóa luận tốt nghiệp — nền tảng hỗ trợ **công dân** 
 - [Luồng nghiệp vụ](#luồng-nghiệp-vụ-chính)
 - [Biến môi trường](#biến-môi-trường)
 - [API](#api)
-- [Bảo mật khi public](#bảo-mật-khi-public-repo)
 - [Xử lý sự cố](#xử-lý-sự-cố-thường-gặp)
 
 ---
@@ -126,10 +125,8 @@ Import schema và dữ liệu mẫu từ thư mục `database/`:
 
 | File | Database |
 |------|----------|
-| `vneid_simulator (0).sql` | `vneid` |
-| `land_tax_management (0).sql` | `land-tax` |
-| `seed_e2e_full_demo.sql` | `land-tax` (tuỳ chọn — dữ liệu demo E2E) |
-| `seed_annual_tax_demo_001201000011.sql` | `land-tax` (tuỳ chọn — demo thuế hằng năm) |
+| `vneid (2).sql` | `vneid` |
+| `land-tax (2).sql` | `land-tax` |
 
 Có thể import bằng MySQL Workbench, DBeaver hoặc CLI:
 
@@ -303,15 +300,6 @@ Frontend gọi Auth qua port `9090`, nghiệp vụ qua port `8080` (cấu hình 
 
 ---
 
-## Bảo mật khi public repo
-
-- Chỉ commit `.env.example`, **không** commit `.env`
-- Không commit `firebase-service-account.json`, `venv/`, `node_modules/`
-- Đổi / revoke API key nếu từng lộ trong git history cũ
-- Có thể tạo **repo Git mới** (1 commit sạch) thay vì push history cũ có secret
-
----
-
 ## Xử lý sự cố thường gặp
 
 | Triệu chứng | Nguyên nhân thường gặp |
@@ -322,12 +310,6 @@ Frontend gọi Auth qua port `9090`, nghiệp vụ qua port `8080` (cấu hình 
 | Spring Boot không kết nối DB | Chưa chạy `load-env.ps1` / thiếu `DB_PASSWORD` trong `.env` |
 | Chatbot không trả lời | Thiếu `GOOGLE_API_KEY` hoặc service port `8000` chưa bật |
 | OTP email không gửi | Sai `SPRING_MAIL_PASSWORD` (cần Gmail App Password) |
-
----
-
-## App Android VNeID
-
-Thư mục `AppVneID/` là ứng dụng Android mô phỏng VNeID. Mở bằng Android Studio, cấu hình `local.properties` (SDK path) — file này không nên commit.
 
 ---
 
